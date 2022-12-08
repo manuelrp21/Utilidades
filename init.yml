@@ -1,0 +1,20 @@
+stages:
+- template: build.yml
+  parameters: 
+    BuildParameters.solution: $(BuildParameters.solution)
+    configuration: $(configuration)
+    agente: $(agente)
+    msbuildLocation: $(msbuildLocation)
+    nameartifacts: $(nameartifacts)
+
+- template: deploy.yml
+  parameters: 
+    sourcePath: $(sourcePath)
+    targetPath: $(targetPath)
+    ip-server: $(ip-server)
+    usuario: $(usuario)
+    password: $(password)
+    targetPath2: $(targetPath2)
+    ip-server1: $(ip-server1)
+    pathdeploy: $(pathdeploy)
+    nameartifacts: $(nameartifacts)
