@@ -1,0 +1,39 @@
+stages: 
+
+- stage: build
+  displayName: Build
+
+  jobs: 
+  - job: Build
+    displayName: MSBuild
+    pool:
+      name: Default
+      demands: 
+      - agent.name -equals $(agente)
+
+    steps:
+
+    - task: NuGetCommand@2
+      displayName: NuGet restore
+      inputs:
+        solution: $(BuildParameters.solution)
+
+    - task: NuGetToolInstaller@1
+      inputs:
+        versionspec: 4.1.0
+        
+    - task: NuGetCommand@2
+      displayName: NuGet restore
+      inputs:
+        solution: $(BuildParameters.solution)
+
+    - task: MSBuild@1
+      inputs:
+        solution: $(BuildParameters.solution)
+        configuration: $(configuration)
+        msbuildLocationMethod: 'location'
+        msbuildLocation: $(msbuildLocation)
+        msbuildArguments: '/t:Rebuild /p:Configuration=Release /p:outdir=".\out\\"'
+    
+    - publish: $(Build.Repository.LocalPath)/$(sourcePath)
+      artifact: WebApp

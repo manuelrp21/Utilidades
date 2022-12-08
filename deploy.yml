@@ -1,0 +1,52 @@
+stages: 
+
+- template: approvals.yml
+
+- stage: deploy
+  dependsOn: 
+    - approvals
+  displayName: Deploy
+ 
+  jobs: 
+    - job: Deploy
+      displayName: WindowsMachineFileCopy
+      pool:
+        name: Default
+        demands: 
+        - agent.name -equals $(agente)
+
+      steps:
+
+      - download: current  
+        artifact: $(nameartifacts)
+
+      - task: DeleteFiles@1
+        inputs:
+          SourceFolder: '$(Pipeline.Workspace)\$(deletepath)'
+          Contents: 'web.config'
+
+      - task: PowerShell@2
+        displayName: 'copy files'
+        env:
+          USER: $(usuario)
+          PWD: $(password)
+          LocalPath:  $(Pipeline.Workspace)/$(pathdeploy)/
+          RemotePath: $(targetPath)
+        inputs:
+          targetType: 'inline'
+          script: |
+              
+              foreach($servidor in [System.IO.File]::ReadLines("$(servidores)"))
+              {
+
+                  #Convert to SecureString
+                  [securestring]$secStringPassword = ConvertTo-SecureString $env:PWD -AsPlainText -Force
+
+                  [pscredential]$credObject = New-Object System.Management.Automation.PSCredential ($env:USER, $secStringPassword)
+
+                  $TargetSession = New-PSSession -ComputerName $servidor -Credential $credObject
+            
+                  Copy-Item -Path $env:LocalPath -Destination $env:RemotePath -ToSession $TargetSession -Force -Recurs
+                  
+                  Invoke-Command -Session $TargetSession -ScriptBlock {Restart-WebAppPool -Name "$(appspool)"}
+              }

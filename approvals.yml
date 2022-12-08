@@ -1,0 +1,21 @@
+
+stages: 
+
+- stage: approvals
+  dependsOn: build
+  displayName: approvals
+#  condition: and(succeeded('build'), eq(variables['Build.SourceBranch'], 'refs/heads/release/*'))
+  pool:
+      name: Default
+      demands: 
+      - agent.name -equals $(agente)
+
+  jobs: 
+  - deployment: testApprovals
+    environment: $(approvals-enviroment)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - script: echo "Approval Completed"
+    
